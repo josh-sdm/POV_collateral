@@ -34,13 +34,13 @@ unzip sdmcli* && rm -f sdmcli*
 export INSTANCE_PUBLIC_IP=` curl https://ifconfig.me`
 export INSTANCE_PRIVATE_IP=`curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/?api-version=2021-02-01" | jq -r .privateIpAddress`
 export INSTANCE_ID=`curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" | jq -r .vmId`
-export INSTANCE_NAME=`curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" | jq -r .name`
+export INSTANCE_FRIENDLY_NAME=`curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01" | jq -r .name`
 
 # Use the sdm binary with SDM_ADMIN_TOKEN to create a ssh certificate authority resource for the gateway
-./sdm admin servers create ssh-cert --hostname $INSTANCE_PRIVATE_IP --port 22 --username $SSH_USERNAME $INSTANCE_NAME-ssh --tags instance=$INSTANCE_ID
+./sdm admin servers create ssh-cert --hostname $INSTANCE_PRIVATE_IP --port 22 --username $SSH_USERNAME $INSTANCE_FRIENDLY_NAME-ssh --tags instance=$INSTANCE_ID
 
 # Set SDM_RELAY_TOKEN token by using the sdm binary with SDM_ADMIN_TOKEN to add a new gateway
-export SDM_RELAY_TOKEN=`./sdm admin relays create-gateway $INSTANCE_PUBLIC_IP:$SDM_LISTEN_PORT 0.0.0.0:$SDM_LISTEN_PORT --name $INSTANCE_NAME --tags instance=$INSTANCE_ID`
+export SDM_RELAY_TOKEN=`./sdm admin relays create-gateway $INSTANCE_PUBLIC_IP:$SDM_LISTEN_PORT 0.0.0.0:$SDM_LISTEN_PORT --name $INSTANCE_FRIENDLY_NAME --tags instance=$INSTANCE_ID`
 export SDM_CA_PUB=`./sdm admin ssh view-ca`
 unset SDM_ADMIN_TOKEN
 ./sdm install --relay --user strongdm
