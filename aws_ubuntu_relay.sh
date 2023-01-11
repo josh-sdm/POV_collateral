@@ -1,7 +1,6 @@
 #!/bin/bash
 # This script should work for AWS EC2 user data as well as running EC2 instances where you wish to install a strongDM relay
-# Your EC2 instance should have a security group rule that allows the relay to reach strongDM gateways on 5000/tcp
-# Your EC2 instance needs to have a valid egress route with the ability to reach app.strongdm.com as well as your strongDM gateways
+# Your EC2 instance should have an egress route and security group rules that allows the relay to reach strongDM gateways on 5000/tcp
 # Your EC2 instance should also have a friendly name that contains only digits, lowercase characters, and/or - (dash/tack)
 #
 # Create SDM_ADMIN_TOKEN in the strongDM Admin UI with the four scopes in the line below
@@ -19,7 +18,7 @@ apt install jq unzip -y
 useradd -m strongdm
 usermod -aG sudo strongdm
 
-# Download the strongDM gateway binary and unzip it
+# Download the strongDM proxy binary and unzip it
 curl -J -O -L https://app.strongdm.com/releases/cli/linux
 unzip sdmcli* && rm -f sdmcli*
 
@@ -30,16 +29,16 @@ export INSTANCE_PRIVATE_IP=`curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http
 export INSTANCE_ID=`curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-id`
 export INSTANCE_FRIENDLY_NAME=`curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/tags/instance/Name`
 
-# Use the sdm binary with SDM_ADMIN_TOKEN to create a ssh certificate authority resource for the gateway
+# Use the sdm binary with SDM_ADMIN_TOKEN to create a ssh certificate authority resource for the relay
 ./sdm admin servers create ssh-cert --hostname $INSTANCE_PRIVATE_IP --port 22 --username $SSH_USERNAME $INSTANCE_FRIENDLY_NAME-ssh --tags instance=$INSTANCE_ID
 
-# Set SDM_RELAY_TOKEN token by using the sdm binary with SDM_ADMIN_TOKEN to add a new gateway
+# Set SDM_RELAY_TOKEN token by using the sdm binary with SDM_ADMIN_TOKEN to add a new relay
 export SDM_RELAY_TOKEN=`./sdm admin relays create --name $INSTANCE_FRIENDLY_NAME --tags instance=$INSTANCE_ID`
 export SDM_CA_PUB=`./sdm admin ssh view-ca`
 unset SDM_ADMIN_TOKEN
 ./sdm install --relay --user strongdm
 
-# Add the public certificate from your strongDM tenant to the sshd config of the gateway
+# Add the public certificate from your strongDM tenant to the sshd config of the relay
 echo $SDM_CA_PUB | tee -a /etc/ssh/sdm_ca.pub
 echo "TrustedUserCAKeys /etc/ssh/sdm_ca.pub" | tee -a /etc/ssh/sshd_config
 systemctl restart ssh
