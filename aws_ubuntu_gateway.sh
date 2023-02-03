@@ -2,6 +2,7 @@
 # This script should work for AWS EC2 user data as well as running EC2 instances where you wish to install a strongDM gateway
 # Your EC2 instance should have a public IPv4 address and a security group rule that allows 5000/tcp from 0.0.0.0/0
 # Your EC2 instance should also have a friendly name that contains only digits, lowercase characters, and/or - (dash/tack)
+# Using the INSTANCE_NAME variable below requires that tags be enabled for IMDS
 #
 # Create SDM_ADMIN_TOKEN in the strongDM Admin UI with the four scopes in the line below
 # Relays: Create, Relays: List, Datasources & Servers: Create, and Control Panel: View Settings
